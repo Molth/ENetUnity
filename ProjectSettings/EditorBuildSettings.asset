@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/NetickBomberman.unity
+    guid: 9164b95b54e2c2748a554d9d53653921
+  - enabled: 1
     path: Assets/Scenes/MirrorTanks.unity
     guid: 232932a5e43bff1419c516a1e8f7fa56
   m_configObjects: {}
