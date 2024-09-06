@@ -82,11 +82,8 @@ namespace enet
                 if (host != null)
                 {
                     foreach (var peer in _peers.Values)
-                    {
                         enet_peer_disconnect_now((ENetPeer*)peer, 0);
-                        enet_host_flush(host);
-                    }
-
+                    enet_host_flush(host);
                     enet_host_destroy(host);
                 }
 

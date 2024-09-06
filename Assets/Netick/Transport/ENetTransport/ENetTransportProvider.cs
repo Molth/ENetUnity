@@ -146,11 +146,8 @@ namespace Netick.Transport
                 if (_host != null)
                 {
                     foreach (var peer in _peers.Values)
-                    {
                         enet_peer_disconnect_now(peer.Peer, 0);
-                        enet_host_flush(_host);
-                    }
-
+                    enet_host_flush(_host);
                     enet_host_destroy(_host);
                 }
 
