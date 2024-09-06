@@ -1,0 +1,1 @@
+This project is a Unity implementation of [enet-csharp](https://github.com/Molth/enet-csharp).
