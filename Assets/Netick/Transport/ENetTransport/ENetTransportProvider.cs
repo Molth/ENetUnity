@@ -158,6 +158,7 @@ namespace Netick.Transport
                 while (_networkEvents.TryDequeue(out var networkEvent))
                     enet_packet_destroy(networkEvent.packet);
                 _networkEvents.Dispose();
+                _peers.Clear();
                 enet_deinitialize();
             }
         }
