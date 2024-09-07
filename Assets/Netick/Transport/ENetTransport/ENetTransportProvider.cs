@@ -113,7 +113,11 @@ namespace Netick.Transport
                     while (_removedPeers.TryDequeue(out var peer))
                         enet_peer_disconnect_now((ENetPeer*)peer, 0);
                     while (_outgoings.TryDequeue(out var outgoing))
-                        enet_peer_send(outgoing.Peer, 0, outgoing.Packet);
+                    {
+                        if (enet_peer_send(outgoing.Peer, 0, outgoing.Packet) != 0)
+                            enet_packet_destroy(outgoing.Packet);
+                    }
+
                     var polled = false;
                     while (!polled)
                     {
