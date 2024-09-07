@@ -42,7 +42,7 @@ namespace enet
                 address.port = Port;
                 host = enet_host_create(&address, NetworkManager.singleton.maxConnections, 0, 0, 0);
                 var @event = new ENetEvent();
-                var spinWait = new SpinWait();
+                var spinCount = 0;
                 Interlocked.Exchange(ref _state, 1);
                 while (_state == 1)
                 {
@@ -74,7 +74,23 @@ namespace enet
                     }
 
                     enet_host_flush(host);
-                    spinWait.SpinOnce();
+                    if ((spinCount >= 10 && (spinCount - 10) % 2 == 0) || Environment.ProcessorCount == 1)
+                    {
+                        var yieldsSoFar = spinCount >= 10 ? (spinCount - 10) / 2 : spinCount;
+                        if (yieldsSoFar % 5 == 4)
+                            Thread.Sleep(0);
+                        else
+                            Thread.Yield();
+                    }
+                    else
+                    {
+                        var iterations = Environment.ProcessorCount / 2;
+                        if (spinCount <= 30 && 1 << spinCount < iterations)
+                            iterations = 1 << spinCount;
+                        Thread.SpinWait(iterations);
+                    }
+
+                    spinCount = spinCount == int.MaxValue ? 10 : spinCount + 1;
                 }
             }
             finally
@@ -115,7 +131,7 @@ namespace enet
                 host = enet_host_create(null, 1, 0, 0, 0);
                 enet_host_connect(host, &address, 0, 0);
                 var @event = new ENetEvent();
-                var spinWait = new SpinWait();
+                var spinCount = 0;
                 Interlocked.Exchange(ref _state, 2);
                 while (_state == 2)
                 {
@@ -145,7 +161,23 @@ namespace enet
                     }
 
                     enet_host_flush(host);
-                    spinWait.SpinOnce();
+                    if ((spinCount >= 10 && (spinCount - 10) % 2 == 0) || Environment.ProcessorCount == 1)
+                    {
+                        var yieldsSoFar = spinCount >= 10 ? (spinCount - 10) / 2 : spinCount;
+                        if (yieldsSoFar % 5 == 4)
+                            Thread.Sleep(0);
+                        else
+                            Thread.Yield();
+                    }
+                    else
+                    {
+                        var iterations = Environment.ProcessorCount / 2;
+                        if (spinCount <= 30 && 1 << spinCount < iterations)
+                            iterations = 1 << spinCount;
+                        Thread.SpinWait(iterations);
+                    }
+
+                    spinCount = spinCount == int.MaxValue ? 10 : spinCount + 1;
                 }
             }
             finally
@@ -153,11 +185,8 @@ namespace enet
                 if (host != null)
                 {
                     foreach (var peer in _peers.Values)
-                    {
                         enet_peer_disconnect_now((ENetPeer*)peer, 0);
-                        enet_host_flush(host);
-                    }
-
+                    enet_host_flush(host);
                     enet_host_destroy(host);
                 }
 
