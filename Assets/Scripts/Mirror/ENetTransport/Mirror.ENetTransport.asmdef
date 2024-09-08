@@ -1,0 +1,17 @@
+{
+    "name": "Mirror.ENetTransport",
+    "rootNamespace": "",
+    "references": [
+        "GUID:3ec31f503417e5f49bf4337470e10e69",
+        "GUID:30817c1a0e6d646d99c048fc403f5979"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
