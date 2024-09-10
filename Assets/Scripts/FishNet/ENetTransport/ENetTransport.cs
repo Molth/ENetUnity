@@ -467,6 +467,6 @@ namespace FishNet
             StopConnection(true);
         }
 
-        public override int GetMTU(byte channel) => (int)ENET_HOST_DEFAULT_MTU;
+        public override int GetMTU(byte channel) => 1023;
     }
 }
