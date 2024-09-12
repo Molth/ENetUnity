@@ -54,13 +54,13 @@ namespace NativeCollections
             if (RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
             {
                 var segmentPool = new NativeMemoryPool(size, sizeof(NativeConcurrentQueueSegmentNotArm64<T>) + NativeConcurrentQueueSegmentNotArm64<T>.LENGTH * sizeof(NativeConcurrentQueueSegmentNotArm64<T>.Slot), maxFreeSlabs);
-                _handle = (nint)NativeMemoryAllocator.Alloc(sizeof(NativeConcurrentQueueNotArm64<T>));
+                _handle = (nint)NativeMemoryAllocator.Alloc((uint)sizeof(NativeConcurrentQueueNotArm64<T>));
                 NotArm64Handle->Initialize(segmentPool);
             }
             else
             {
                 var segmentPool = new NativeMemoryPool(size, sizeof(NativeConcurrentQueueSegmentArm64<T>) + NativeConcurrentQueueSegmentArm64<T>.LENGTH * sizeof(NativeConcurrentQueueSegmentArm64<T>.Slot), maxFreeSlabs);
-                _handle = (nint)NativeMemoryAllocator.Alloc(sizeof(NativeConcurrentQueueArm64<T>));
+                _handle = (nint)NativeMemoryAllocator.Alloc((uint)sizeof(NativeConcurrentQueueArm64<T>));
                 Arm64Handle->Initialize(segmentPool);
             }
         }
@@ -142,7 +142,7 @@ namespace NativeCollections
                 NotArm64Handle->Dispose();
             else
                 Arm64Handle->Dispose();
-            NativeMemoryAllocator.Free(_handle);
+            NativeMemoryAllocator.Free((void*)_handle);
         }
 
         /// <summary>

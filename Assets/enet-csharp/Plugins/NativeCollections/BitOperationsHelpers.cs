@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
 using System.Numerics;
 using System.Runtime.Intrinsics;
 
@@ -17,7 +17,7 @@ namespace NativeCollections
     /// </summary>
     internal static class BitOperationsHelpers
     {
-#if !NET5_0_OR_GREATER
+#if !NET7_0_OR_GREATER
         /// <summary>
         ///     DeBruijn sequence
         /// </summary>
@@ -44,7 +44,7 @@ namespace NativeCollections
         /// <returns>Log2</returns>
         public static int Log2(uint value)
         {
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
             return BitOperations.Log2(value);
 #else
             value |= 1;
@@ -92,7 +92,7 @@ namespace NativeCollections
                     return;
             }
 
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
             uint i = 0;
             ref var left = ref MemoryMarshal.GetReference(destination);
             ref var right = ref MemoryMarshal.GetReference(source);
@@ -115,10 +115,10 @@ namespace NativeCollections
                 }
             }
 
-            for (; i < count; i++)
+            for (; i < count; ++i)
                 Unsafe.Add(ref left, i) &= Unsafe.Add(ref right, i);
 #else
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
                 destination[i] &= source[i];
 #endif
         }
@@ -158,7 +158,7 @@ namespace NativeCollections
                     return;
             }
 
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
             uint i = 0;
             ref var left = ref MemoryMarshal.GetReference(destination);
             ref var right = ref MemoryMarshal.GetReference(source);
@@ -181,10 +181,10 @@ namespace NativeCollections
                 }
             }
 
-            for (; i < count; i++)
+            for (; i < count; ++i)
                 Unsafe.Add(ref left, i) |= Unsafe.Add(ref right, i);
 #else
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
                 destination[i] |= source[i];
 #endif
         }
@@ -224,7 +224,7 @@ namespace NativeCollections
                     return;
             }
 
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
             uint i = 0;
             ref var left = ref MemoryMarshal.GetReference(destination);
             ref var right = ref MemoryMarshal.GetReference(source);
@@ -247,10 +247,10 @@ namespace NativeCollections
                 }
             }
 
-            for (; i < count; i++)
+            for (; i < count; ++i)
                 Unsafe.Add(ref left, i) ^= Unsafe.Add(ref right, i);
 #else
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
                 destination[i] ^= source[i];
 #endif
         }
@@ -289,7 +289,7 @@ namespace NativeCollections
                     return;
             }
 
-#if NET5_0_OR_GREATER
+#if NET7_0_OR_GREATER
             uint i = 0;
             ref var value = ref MemoryMarshal.GetReference(destination);
             if (Vector256.IsHardwareAccelerated)
@@ -311,10 +311,10 @@ namespace NativeCollections
                 }
             }
 
-            for (; i < count; i++)
+            for (; i < count; ++i)
                 Unsafe.Add(ref value, i) = ~ Unsafe.Add(ref value, i);
 #else
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
                 destination[i] = ~ destination[i];
 #endif
         }
