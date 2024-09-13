@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/FishNetTanks.unity
-    guid: c94dcb4f1c0b54f4ca31de72ef59bc05
+    path: Assets/Scenes/NetickBomberman.unity
+    guid: 9164b95b54e2c2748a554d9d53653921
   m_configObjects: {}

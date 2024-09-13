@@ -18,7 +18,7 @@ namespace Mirror
         private NativeConcurrentQueue<nint> _removedPeers;
         private NativeConcurrentQueue<ENetOutgoing> _outgoings;
         private NativeConcurrentQueue<ENetEvent> _incomings;
-        private NativeDictionary<int, nint> _peers;
+        private NativeArray<nint> _peers;
         private nint _peer;
         private byte[] _receiveBuffer;
 
@@ -31,7 +31,7 @@ namespace Mirror
         private void StartServer()
         {
             _isServer = true;
-            _peers = new NativeDictionary<int, nint>(NetworkManager.singleton.maxConnections);
+            _peers = new NativeArray<nint>(NetworkManager.singleton.maxConnections, true);
             _removedPeers = new NativeConcurrentQueue<nint>(1, 2);
             _outgoings = new NativeConcurrentQueue<ENetOutgoing>(1, 2);
             _incomings = new NativeConcurrentQueue<ENetEvent>(1, 2);
@@ -102,8 +102,12 @@ namespace Mirror
             {
                 if (host != null)
                 {
-                    foreach (var peer in _peers.Values)
-                        enet_peer_disconnect_now((ENetPeer*)peer, 0);
+                    foreach (var peer in _peers)
+                    {
+                        if (peer != IntPtr.Zero)
+                            enet_peer_disconnect_now((ENetPeer*)peer, 0);
+                    }
+
                     enet_host_flush(host);
                     enet_host_destroy(host);
                 }
@@ -162,7 +166,7 @@ namespace Mirror
                             continue;
                         if (@event.type == ENetEventType.ENET_EVENT_TYPE_CONNECT)
                         {
-                             peer = @event.peer;
+                            peer = @event.peer;
                             enet_peer_ping_interval(peer, 500);
                             enet_peer_timeout(peer, 5000, 0, 0);
                         }
@@ -226,7 +230,7 @@ namespace Mirror
                             OnServerConnectedWithAddress(peer->incomingPeerID + 1, peer->address.ToString());
                             break;
                         case ENetEventType.ENET_EVENT_TYPE_DISCONNECT:
-                            _peers.Remove(peer->incomingPeerID);
+                            _peers[peer->incomingPeerID] = IntPtr.Zero;
                             OnServerDisconnected(peer->incomingPeerID + 1);
                             break;
                         case ENetEventType.ENET_EVENT_TYPE_RECEIVE:
@@ -312,13 +316,15 @@ namespace Mirror
 
         public override void ServerSend(int connectionId, ArraySegment<byte> segment, int channelId = Channels.Reliable)
         {
-            if (_peers.TryGetValue(connectionId - 1, out var peer))
+            var peer = _peers[connectionId - 1];
+            if (peer != IntPtr.Zero)
                 _outgoings.Enqueue(ENetOutgoing.Create(peer, segment, channelId == Channels.Reliable ? ENetPacketFlag.ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag.ENET_PACKET_FLAG_UNSEQUENCED));
         }
 
         public override void ServerDisconnect(int connectionId)
         {
-            if (_peers.TryGetValue(connectionId - 1, out var peer))
+            var peer = _peers[connectionId - 1];
+            if (peer != IntPtr.Zero)
                 _removedPeers.Enqueue(peer);
         }
 

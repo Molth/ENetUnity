@@ -2,7 +2,7 @@
 
 namespace enet
 {
-    public sealed class ENetClient
+    public struct ENetClient
     {
         public int State;
         public nint Peer;

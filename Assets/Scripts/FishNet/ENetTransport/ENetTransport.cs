@@ -18,12 +18,7 @@ namespace FishNet
         private ENetClient _client;
         private byte[] _receiveBuffer;
 
-        private void Start()
-        {
-            _server ??= new ENetServer();
-            _client ??= new ENetClient();
-            _receiveBuffer = new byte[MAX_PACKET_LENGTH];
-        }
+        private void Start() => _receiveBuffer = new byte[MAX_PACKET_LENGTH];
 
         private void OnDestroy() => Shutdown();
         ~ENetTransport() => Shutdown();
@@ -46,7 +41,11 @@ namespace FishNet
 
         public override ushort GetPort() => Port;
 
-        public override string GetConnectionAddress(int connectionId) => _server.Peers.TryGetValue(connectionId, out var peer) ? ((ENetPeer*)peer)->address.host.ToString() : null;
+        public override string GetConnectionAddress(int connectionId)
+        {
+            var peer = _server.Peers[connectionId];
+            return peer != IntPtr.Zero ? ((ENetPeer*)peer)->address.host.ToString() : null;
+        }
 
         public override event Action<ClientConnectionStateArgs> OnClientConnectionState;
         public override event Action<ServerConnectionStateArgs> OnServerConnectionState;
@@ -89,7 +88,8 @@ namespace FishNet
 
         public override RemoteConnectionState GetConnectionState(int connectionId)
         {
-            if (_server.Peers.TryGetValue(connectionId, out var peer))
+            var peer = _server.Peers[connectionId];
+            if (peer != IntPtr.Zero)
             {
                 switch (((ENetPeer*)peer)->state)
                 {
@@ -125,7 +125,8 @@ namespace FishNet
         public override void SendToClient(byte channelId, ArraySegment<byte> segment, int connectionId)
         {
             var channel = (Channel)channelId;
-            if (_server.Peers.TryGetValue(connectionId, out var peer))
+            var peer = _server.Peers[connectionId];
+            if (peer != IntPtr.Zero)
             {
                 var outgoing = ENetOutgoing.Create(peer, segment, channel == Channel.Reliable ? ENetPacketFlag.ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag.ENET_PACKET_FLAG_UNSEQUENCED);
                 _server.Outgoings.Enqueue(outgoing);
@@ -144,7 +145,7 @@ namespace FishNet
         {
             if (server)
             {
-                if (_server == null || _server.State == 0)
+                if (_server.State == 0)
                     return;
                 while (_server.Incomings.TryDequeue(out var networkEvent))
                 {
@@ -159,7 +160,7 @@ namespace FishNet
                             HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionState.Started, peer->incomingPeerID, Index));
                             break;
                         case ENetEventType.ENET_EVENT_TYPE_DISCONNECT:
-                            _server.Peers.Remove(peer->incomingPeerID);
+                            _server.Peers[peer->incomingPeerID] = IntPtr.Zero;
                             HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, peer->incomingPeerID, Index));
                             break;
                         case ENetEventType.ENET_EVENT_TYPE_RECEIVE:
@@ -180,7 +181,7 @@ namespace FishNet
             }
             else
             {
-                if (_client == null || _client.State == 0)
+                if (_client.State == 0)
                     return;
                 while (_client.Incomings.TryDequeue(out var networkEvent))
                 {
@@ -240,7 +241,7 @@ namespace FishNet
 
         private void StartServer()
         {
-            _server.Peers = new NativeDictionary<int, nint>(MaxPeers);
+            _server.Peers = new NativeArray<nint>(MaxPeers, true);
             _server.RemovedPeers = new NativeConcurrentQueue<nint>(1, 2);
             _server.Outgoings = new NativeConcurrentQueue<ENetOutgoing>(1, 2);
             _server.Incomings = new NativeConcurrentQueue<ENetEvent>(1, 2);
@@ -312,8 +313,12 @@ namespace FishNet
             {
                 if (host != null)
                 {
-                    foreach (var peer in _server.Peers.Values)
-                        enet_peer_disconnect_now((ENetPeer*)peer, 0);
+                    foreach (var peer in _server.Peers)
+                    {
+                        if (peer != IntPtr.Zero)
+                            enet_peer_disconnect_now((ENetPeer*)peer, 0);
+                    }
+
                     enet_host_flush(host);
                     enet_host_destroy(host);
                 }
@@ -423,15 +428,11 @@ namespace FishNet
         {
             if (server)
             {
-                if (_server == null)
-                    return true;
                 if (Interlocked.CompareExchange(ref _server.State, 0, 1) == 1)
                     HandleServerConnectionState(new ServerConnectionStateArgs(LocalConnectionState.Stopped, Index));
             }
             else
             {
-                if (_client == null)
-                    return true;
                 if (Interlocked.CompareExchange(ref _client.State, 0, 2) == 2)
                     HandleClientConnectionState(new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index));
             }
@@ -443,15 +444,18 @@ namespace FishNet
         {
             if (immediately)
             {
-                if (_server.Peers.Remove(connectionId, out var peer))
+                var peer = _server.Peers[connectionId];
+                if (peer != IntPtr.Zero)
                 {
+                    _server.Peers[connectionId] = IntPtr.Zero;
                     _server.RemovedPeers.Enqueue(peer);
                     return true;
                 }
             }
             else
             {
-                if (_server.Peers.TryGetValue(connectionId, out var peer))
+                var peer = _server.Peers[connectionId];
+                if (peer != IntPtr.Zero)
                 {
                     _server.RemovedPeers.Enqueue(peer);
                     return true;
